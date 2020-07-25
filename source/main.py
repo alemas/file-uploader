@@ -1,9 +1,12 @@
 from googleapiclient.discovery import build
 
 import credentials
+import file_handler
 
 def main():
     creds = credentials.get()
+
+    file_handler.upload('teste.txt')
 
     service = build('drive', 'v3', credentials=creds)
 
