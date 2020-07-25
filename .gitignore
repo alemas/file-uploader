@@ -1,5 +1,5 @@
-source/token.pickle
-source/credentials.json
+/source/token.pickle
+/source/credentials.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
