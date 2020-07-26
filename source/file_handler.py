@@ -11,7 +11,7 @@ from requests.exceptions import HTTPError
 import credentials
 
 drive = build('drive', 'v3', credentials=credentials.get())
-chunk_size = 1024*256*4
+chunk_size = 1024*1024*5
 
 ACCESS_TOKEN = credentials.get().token
 API_KEY = None
@@ -58,14 +58,12 @@ def upload(path):
                 data_size = sys.getsizeof(data)
                 headers = __get_resumable_upload_headers(
                     str(data_size),
-                    "bytes " + str(offset) + "-" + str(offset+data_size-1) + "/" + str(file_size))
+                    "bytes " + str(offset) + "-" + str(offset+data_size-1-17) + "/" + str(file_size))
                 response = requests.put(resumable_url,
                 headers=headers,
                 data=data)
 
-                # print(response.request.path_url)
-                print(response.request.headers)
-                print(response.text)
+                print(response)
                 
                 offset += chunk_size
 
@@ -91,7 +89,6 @@ def __get_initial_request_headers(body, file_size):
 
 def __get_resumable_upload_headers(size, range):
     headers = {
-        # "Authorization":"Bearer " + ACCESS_TOKEN,
         "Content-Length": size,
         "Content-Range": range
     }
@@ -100,7 +97,6 @@ def __get_resumable_upload_headers(size, range):
 def __read_file_chunks(file):
     while True:
         chunk = file.read(chunk_size)
-        print(str(sys.getsizeof(chunk)) + " = " + str(chunk_size))
         if not chunk:
             break
         yield chunk

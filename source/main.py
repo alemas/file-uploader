@@ -6,7 +6,7 @@ import file_handler
 def main():
     creds = credentials.get()
 
-    file_handler.upload('data/big_photo.jpg')
+    file_handler.upload('data/really_big.zip')
 
     service = build('drive', 'v3', credentials=creds)
 
