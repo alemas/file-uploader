@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Google Drive Uploader")
-        self.setFixedSize(800, 600)
+        self.setFixedSize(650, 400)
         self.generalLayout = QVBoxLayout()
         self._centralWidget = QWidget(self)
         self.setCentralWidget(self._centralWidget)
@@ -27,18 +27,26 @@ class MainWindow(QMainWindow):
 
     def _createUploadGui(self):
         
-        lblFilePath = QLabel("File/Folder to Upload:")
+        lblFilePath = QLabel("Local Drive path:")
         lblDrivePath = QLabel("Google Drive Path:")
 
         ledFilePath = QLineEdit()
         ledDrivePath = QLineEdit()
-        # ledFilePath.setAlignment(Qt.AlignLeft)
         ledDrivePath.setReadOnly(True)
         ledDrivePath.setText("/")
 
-        btnFilePath = QPushButton("Choose Path")
+        self.ledFilePath = ledFilePath
+        self.ledDrivePath = ledDrivePath
+
+        btnFilePath = QPushButton("Choose File")
+        btnFolderPath = QPushButton("Choose Folder")
         btnDrivePath = QPushButton("Choose Path")
         btnUpload = QPushButton("Upload")
+
+        self.btnFilePath = btnFilePath
+        self.btnFolderPath = btnFolderPath
+        self.btnDrivePath = btnDrivePath
+        self.btnUpload = btnUpload
 
         layout = QGridLayout()
 
@@ -46,11 +54,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(lblFilePath, 0, 0)
         layout.addWidget(ledFilePath, 0, 1, 1, 4)
         layout.addWidget(btnFilePath, 0, 5)
+        layout.addWidget(btnFolderPath, 0, 6)
 
         # Drive Path
         layout.addWidget(lblDrivePath, 1, 0)
         layout.addWidget(ledDrivePath, 1, 1, 1, 4)
-        layout.addWidget(btnDrivePath, 1, 5)
+        layout.addWidget(btnDrivePath, 1, 5, 1, 2)
 
         #Upload Button
         layout.addWidget(btnUpload, 2, 0)
