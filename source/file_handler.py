@@ -27,7 +27,7 @@ with open('api_key.txt') as file:
 
 def upload(path):
     if os.path.exists(path):
-
+        yield ("Starting Upload...", 0)
         file_metadata = {"name": os.path.basename(path)}
         resumable_url = None
         file_size = os.path.getsize(path)
@@ -49,12 +49,14 @@ def upload(path):
 
         except HTTPError as error:
             print(f'HTTP error occurred while starting the file upload: {http_err}')
+            raise
 
         # Starts the upload
         try:
             file = open(path, "rb")
             offset = 0
             for data in __read_file_chunks(file):
+                yield ("Uploading '" + file_metadata['name'] + "'...", offset)
                 data_size = sys.getsizeof(data)
                 headers = __get_resumable_upload_headers(
                     str(data_size),
@@ -66,10 +68,10 @@ def upload(path):
                 print(response)
                 
                 offset += chunk_size
-
         except HTTPError as error:
             print(f'HTTP error occurred while uploading file: {http_err}')
-        
+            raise
+        yield ("Uploaded '" + file_metadata['name'] + "' succesfully!", 100)
     else:
         print("Couldn't find the specified file")
     return

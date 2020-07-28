@@ -1,7 +1,12 @@
+import os.path
+
 from functools import partial
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QMessageBox
+
+import file_handler
 
 class UploadController:
     
@@ -9,6 +14,12 @@ class UploadController:
         super().__init__()
         self._view = view
         self._connectSignals()
+
+        self._view.cbxCompress.setChecked(True)
+        self._view.cbxCompress.setEnabled(False)
+        self._view.cbxReplace.setEnabled(False)
+
+        self._view.btnCancel.setEnabled(False)
 
     def _connectSignals(self):
         self._view.btnFilePath.clicked.connect(partial(self._chooseFilePath))
@@ -43,4 +54,20 @@ class UploadController:
         return
     
     def _uploadFile(self):
+        path = self._view.ledFilePath.text()
+        if os.path.exists(path):
+            self._view.lblStatus.setText("Preparing...")
+            self._view.pbrStatus.setValue(0)
+            try:
+                for status_msg, progress in file_handler.upload(path):
+                    self._view.lblStatus.setText(status_msg)
+                    self._view.pbrStatus.setValue(progress)
+            except Exception as error:
+                errorMsg = QMessageBox(QMessageBox.Critical, "Error", "An Error Ocurred\n\n" + str(error), QMessageBox.Ok)
+                errorMsg.exec()
+                self._view.lblStatus.setText("")
+        else:
+            errorMsg = QMessageBox(QMessageBox.Warning, "Warning", "The chosen file or folder doesn't seem to exist", QMessageBox.Ok)
+            errorMsg.exec()
+        
         return
