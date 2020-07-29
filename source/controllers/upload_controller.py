@@ -6,26 +6,27 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QMessageBox
 
+import views.upload_widget as upload_widget
 import file_handler
 
 class UploadController:
     
-    def __init__(self, view):
+    def __init__(self):
         super().__init__()
-        self._view = view
+        self.view = upload_widget.UploadWidget()
         self._connectSignals()
 
-        self._view.cbxCompress.setChecked(True)
-        self._view.cbxCompress.setEnabled(False)
-        self._view.cbxReplace.setEnabled(False)
+        self.view.cbxCompress.setChecked(True)
+        self.view.cbxCompress.setEnabled(False)
+        self.view.cbxReplace.setEnabled(False)
 
-        self._view.btnCancel.setEnabled(False)
+        self.view.btnCancel.setEnabled(False)
 
     def _connectSignals(self):
-        self._view.btnFilePath.clicked.connect(partial(self._chooseFilePath))
-        self._view.btnFolderPath.clicked.connect(partial(self._chooseFolderPath))
-        self._view.btnDrivePath.clicked.connect(partial(self._chooseDrivePath))
-        self._view.btnUpload.clicked.connect(partial(self._uploadFile))
+        self.view.btnFilePath.clicked.connect(partial(self._chooseFilePath))
+        self.view.btnFolderPath.clicked.connect(partial(self._chooseFolderPath))
+        self.view.btnDrivePath.clicked.connect(partial(self._chooseDrivePath))
+        self.view.btnUpload.clicked.connect(partial(self._uploadFile))
 
     def _chooseFilePath(self):
         dialog = QFileDialog()
@@ -35,7 +36,7 @@ class UploadController:
         if dialog.exec():
             path = dialog.selectedFiles()[0]
         if path:
-            self._view.ledFilePath.setText(path)
+            self.view.ledFilePath.setText(path)
         return
 
     def _chooseFolderPath(self):
@@ -46,26 +47,26 @@ class UploadController:
         if dialog.exec():
             path = dialog.selectedFiles()[0]
         if path:
-            self._view.ledFilePath.setText(path)
+            self.view.ledFilePath.setText(path)
         return
 
     def _chooseDrivePath(self):
-        # self._view.ledDrivePath.setText("/")
+        # self.view.ledDrivePath.setText("/")
         return
     
     def _uploadFile(self):
-        path = self._view.ledFilePath.text()
+        path = self.view.ledFilePath.text()
         if os.path.exists(path):
-            self._view.lblStatus.setText("Preparing...")
-            self._view.pbrStatus.setValue(0)
+            self.view.lblStatus.setText("Preparing...")
+            self.view.pbrStatus.setValue(0)
             try:
                 for status_msg, progress in file_handler.upload(path):
-                    self._view.lblStatus.setText(status_msg)
-                    self._view.pbrStatus.setValue(progress)
+                    self.view.lblStatus.setText(status_msg)
+                    self.view.pbrStatus.setValue(progress)
             except Exception as error:
                 errorMsg = QMessageBox(QMessageBox.Critical, "Error", "An Error Ocurred\n\n" + str(error), QMessageBox.Ok)
                 errorMsg.exec()
-                self._view.lblStatus.setText("")
+                self.view.lblStatus.setText("")
         else:
             errorMsg = QMessageBox(QMessageBox.Warning, "Warning", "The chosen file or folder doesn't seem to exist", QMessageBox.Ok)
             errorMsg.exec()

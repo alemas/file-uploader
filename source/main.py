@@ -5,16 +5,12 @@ from PyQt5.QtWidgets import QApplication
 
 import credentials
 import file_handler
-import views.main_window as main_window
-import upload_controller
+import controllers.app_controller as app_controller
 
 def main():
-    app = QApplication(sys.argv)
-    view = main_window.MainWindow()
-    view.show()
-    upload_controller.UploadController(view=view)
-
-    sys.exit(app.exec())
+    q_application = QApplication(sys.argv)
+    app = app_controller.AppController()
+    sys.exit(q_application.exec())
 
     # file_handler.upload('data/really_big.zip')
 

@@ -1,34 +1,23 @@
-import sys
-
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QGridLayout
+from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QProgressBar
 from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QLineEdit
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QGroupBox
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QVBoxLayout
-from PyQt5.QtWidgets import QGridLayout
-from PyQt5.QtWidgets import QProgressBar
+from PyQt5.QtCore import Qt
 
-app = QApplication(sys.argv)
-window = QWidget()
-
-class MainWindow(QMainWindow):
+class UploadWidget(QWidget):
 
     def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Google Drive Uploader")
-        self.setFixedSize(650, 400)
-        self.generalLayout = QVBoxLayout()
-        self._centralWidget = QWidget(self)
-        self.setCentralWidget(self._centralWidget)
-        self._centralWidget.setLayout(self.generalLayout)
-        self._createUploadGui()
+        super(QWidget, self).__init__()
+        # self.layout = QVBoxLayout(self)
 
-    def _createUploadGui(self):
+        self._createUploadGUI()
+
+    def _createUploadGUI(self):
         
         lblFilePath = QLabel("Local Drive path:")
         lblDrivePath = QLabel("Google Drive Path:")
@@ -100,6 +89,5 @@ class MainWindow(QMainWindow):
         # Status Label
         layout.addWidget(lblStatus, 5, 0, 1, 7)
 
-        self.generalLayout.addLayout(layout)
+        self.setLayout(layout)
 
-        return
