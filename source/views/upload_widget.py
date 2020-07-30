@@ -13,8 +13,6 @@ class UploadWidget(QWidget):
 
     def __init__(self):
         super(QWidget, self).__init__()
-        # self.layout = QVBoxLayout(self)
-
         self._createUploadGUI()
 
     def _createUploadGUI(self):
@@ -87,7 +85,7 @@ class UploadWidget(QWidget):
         layout.addWidget(pbrStatus, 4, 0, 1, 7)
 
         # Status Label
-        layout.addWidget(lblStatus, 5, 0, 1, 7)
+        layout.addWidget(lblStatus, 5, 0, 1, 7, Qt.AlignTop)
 
         self.setLayout(layout)
 

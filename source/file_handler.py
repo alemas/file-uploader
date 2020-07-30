@@ -3,14 +3,12 @@ import requests
 import json
 import sys
 
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-# from googleapiclient.errors import HttpError
+# from googleapiclient.discovery import build
 from requests.exceptions import HTTPError
 
 import credentials
 
-drive = build('drive', 'v3', credentials=credentials.get())
+# drive = build('drive', 'v3', credentials=credentials.get())
 chunk_size = 1024*1024*5
 
 ACCESS_TOKEN = credentials.get().token
@@ -50,13 +48,16 @@ def upload(path):
         except HTTPError as error:
             print(f'HTTP error occurred while starting the file upload: {http_err}')
             raise
+        except Exception as error:
+            print(f'An error occurred while starting the file upload: {http_err}')
+            raise
 
         # Starts the upload
         try:
             file = open(path, "rb")
             offset = 0
             for data in __read_file_chunks(file):
-                yield ("Uploading '" + file_metadata['name'] + "'...", offset)
+                yield ("Uploading " + file_metadata['name'] + "...", int(offset*100/file_size))
                 data_size = sys.getsizeof(data)
                 headers = __get_resumable_upload_headers(
                     str(data_size),
@@ -68,13 +69,20 @@ def upload(path):
                 print(response)
                 
                 offset += chunk_size
+
+            file.close()
+            yield (file_metadata['name'] + " Upload Complete!", 100)
+
         except HTTPError as error:
-            print(f'HTTP error occurred while uploading file: {http_err}')
+            file.close()
+            print(f'HTTP error occurred while uploading the file: {http_err}')
             raise
-        yield ("Uploaded '" + file_metadata['name'] + "' succesfully!", 100)
+        except Exception as error:
+            file.close()
+            print(f'An error occurred while uploading the file: {http_err}')
+            raise
     else:
         print("Couldn't find the specified file")
-    return
 
 def update(path, id):
     return
