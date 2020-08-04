@@ -26,7 +26,6 @@ class UploadWidget(QWidget):
         ledFilePath = QLineEdit()
         ledDrivePath = QLineEdit()
         ledDrivePath.setReadOnly(True)
-        ledDrivePath.setText("/")
 
         self.ledFilePath = ledFilePath
         self.ledDrivePath = ledDrivePath
