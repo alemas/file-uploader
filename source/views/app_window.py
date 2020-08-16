@@ -14,7 +14,7 @@ class AppWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Google Drive Uploader")
-        self.setFixedSize(650, 400)
+        self.setFixedSize(800, 400)
         self.generalLayout = QVBoxLayout()
         self._centralWidget = QWidget(self)
         self.setCentralWidget(self._centralWidget)

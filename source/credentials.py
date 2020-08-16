@@ -22,7 +22,6 @@ def get():
             creds.refresh(Request())
         else:
             creds = login()
-
     return creds
 
 def login():

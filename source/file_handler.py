@@ -2,10 +2,12 @@ import os.path
 import requests
 import json
 import sys
+import zipfile
 
 from pathlib import Path
 
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from requests.exceptions import HTTPError
 
 import credentials
@@ -25,23 +27,25 @@ class File:
         super().__init__()
         self.id = id
         self.name = name
+        self.date_modified = ""
         self.is_folder = is_folder
         self.size = size
+
+    def description(self):
+        return "id = " + str(self.id) + "\nname = " + str(self.name) + "\ndate_modified = " + str(self.date_modified) + "\nis_folder = " + str(self.is_folder) + "\nsize = " + str(self.size) + "id = " + str(self.id)
 
 def get_user_home_path():
     return str(Path.home())
 
-# def get_local_file(path):
-#     if os.path.exists(path):
-#         with open(path, "r") as file:
-#             return file
-#     return None
-
 def get_gdrive_file(id):
     creds = credentials.get()
     service = build('drive', 'v3', credentials=creds)
-    result = service.files().list(fields="nextPageToken, files(id, name, mimeType)", q='id = ' + id).execute()
-    return File(id=item['id'], name=item['name'], is_folder=item['mimeType'] == 'application/vnd.google-apps.folder')
+    # id = "'" + id + "'"
+    result = service.files().get(fileId=id).execute()
+
+    is_folder = result['mimeType'] == 'application/vnd.google-apps.folder'
+    size = int(result['size']) if 'size' in result else 0
+    return File(id=result['id'], name=result['name'], is_folder=is_folder, size=size)
     
 
 def get_gdrive_file_children(id):
@@ -51,26 +55,61 @@ def get_gdrive_file_children(id):
     page_token = None
     first_time = True
     files = []
+    id = "'" + id + "'"
     while page_token or first_time:
         result = service.files().list(
             pageSize=100, 
-            fields="nextPageToken, files(id, name, mimeType)", 
+            fields="nextPageToken, files(id, name, mimeType, size)", 
             pageToken=page_token,
             q=id + " in parents"
         ).execute()
 
         page_token = result.get('nextPageToken')
         for item in result.get('files', []):
-            files.append(File(id=item['id'], name=item['name'], is_folder=item['mimeType'] == 'application/vnd.google-apps.folder'))
+            is_folder = item['mimeType'] == 'application/vnd.google-apps.folder'
+            size = int(item['size']) if 'size' in item else 0
+            files.append(File(id=item['id'], name=item['name'], is_folder=is_folder, size=size))
         
         first_time = False
     return files
 
+def create_gdrive_folder(name, parents=None):
+    creds = credentials.get()
+    service = build('drive', 'v3', credentials=creds)
 
-def upload(path):
+    file_metadata = {
+        'name': name,
+        'mimeType': 'application/vnd.google-apps.folder'
+    }
+
+    if parents:
+        file_metadata['parents'] = parents
+
+    file = service.files().create(body=file_metadata, fields="id")
+    return File(id=file['id'], name=name, is_folder=true)
+
+def zip_file(path):
+    dest = "tmp/" + os.path.basename(path) + ".zip"
+    zipped = zipfile.ZipFile(dest, "w", compression=zipfile.ZIP_DEFLATED)
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            full_path = os.path.join(root, file)
+            zipped.write(full_path, os.path.relpath(full_path, Path(root).parent))
+    zipped.close()
+    return dest
+
+def clear_temporary_files():
+    for root, dirs, files in os.walk("./tmp"):
+        for file in files:
+            os.remove(os.path.join(root, file))
+            print("removed " + file + " from 'tmp' folder")
+
+def upload(path, parents=None):
     if os.path.exists(path):
         yield ("Starting Upload...", 0)
         file_metadata = {"name": os.path.basename(path)}
+        if parents:
+            file_metadata['parents'] = parents
         resumable_url = None
         file_size = os.path.getsize(path)
 
@@ -82,18 +121,13 @@ def upload(path):
             headers=headers,
             data=json.dumps(file_metadata))
 
-            # print(response.request.path_url)
-            # print(response.request.headers)
-            # print(response.request.body)
-            # print(response.headers)
-
             resumable_url = response.headers['Location']
 
         except HTTPError as error:
-            print(f'HTTP error occurred while starting the file upload: {http_err}')
+            print(f'HTTP error occurred while starting the file upload: {error}')
             raise
         except Exception as error:
-            print(f'An error occurred while starting the file upload: {http_err}')
+            print(f'An error occurred while starting the file upload: {error}')
             raise
 
         # Starts the upload
@@ -115,15 +149,15 @@ def upload(path):
                 offset += chunk_size
 
             file.close()
-            yield (file_metadata['name'] + " Upload Complete!", 100)
+            yield (file_metadata['name'] + " succesfully uploaded!", 100)
 
         except HTTPError as error:
             file.close()
-            print(f'HTTP error occurred while uploading the file: {http_err}')
+            print(f'HTTP error occurred while uploading the file: {error}')
             raise
         except Exception as error:
             file.close()
-            print(f'An error occurred while uploading the file: {http_err}')
+            print(f'An error occurred while uploading the file: {error}')
             raise
     else:
         print("Couldn't find the specified file")

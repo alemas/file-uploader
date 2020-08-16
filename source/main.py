@@ -1,22 +1,26 @@
 import sys
+import locale
 
 from googleapiclient.discovery import build
 from PyQt5.QtWidgets import QApplication
 
 import credentials
 import file_handler
+import user_data_manager
 import controllers.app_controller as app_controller
 
+locale.setlocale(locale.LC_ALL, '') 
+
 def main():
-    # q_application = QApplication(sys.argv)
-    # app = app_controller.AppController()
-    # sys.exit(q_application.exec())
+    q_application = QApplication(sys.argv)
+    app = app_controller.AppController()
+    sys.exit(q_application.exec())
 
     # file_handler.upload('data/really_big.zip')
     # list_files()
     # file_handler.get_gdrive_file('1jMcQBk1P9s5zST2u10iWg7DWQI39cZi_')
-    for file in file_handler.get_gdrive_file_children("'root'"):
-        print(str(file.is_folder))
+    # for file in file_handler.get_gdrive_file_children("'root'"):
+    #     print(str(file.is_folder))
 
 def list_files():
     creds = credentials.get()
