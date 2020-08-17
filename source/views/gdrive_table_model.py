@@ -27,7 +27,7 @@ class GDriveTableModel(QAbstractTableModel):
                 if header == FileHeader.Name:
                     self.data[file_index].append(file.name)
                 elif header == FileHeader.DateModified:
-                    self.data[file_index].append(file.date_modified)
+                    self.data[file_index].append(file.get_formatted_date_modified())
                 elif header == FileHeader.Size:
                     size_str = f'{file.size:n}' + " B"
                     if file.size > 1024:
@@ -35,6 +35,10 @@ class GDriveTableModel(QAbstractTableModel):
                     self.data[file_index].append(size_str)
                 elif header == FileHeader.Shared:
                     self.data[file_index].append(False)
+
+    def refresh(self):
+        self.dataChanged.emit(self.createIndex(0, 0), self.createIndex(self.rowCount(0)-1, self.columnCount(0)-1))
+        self.layoutChanged.emit()
 
     def data(self, index, role=Qt.DisplayRole):
         column = index.column()

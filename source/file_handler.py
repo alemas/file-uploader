@@ -3,6 +3,7 @@ import requests
 import json
 import sys
 import zipfile
+import datetime
 
 from pathlib import Path
 
@@ -23,16 +24,21 @@ with open('api_key.txt') as file:
 
 class File:
 
-    def __init__(self, id, name, is_folder=False, size=0,):
+    def __init__(self, id, name, is_folder=False, date_modified=None, size=0):
         super().__init__()
         self.id = id
         self.name = name
-        self.date_modified = ""
+        self._date_modified = date_modified
         self.is_folder = is_folder
         self.size = size
 
+    def get_formatted_date_modified(self):
+        if self._date_modified:
+            return self._date_modified.strftime("%x %X")
+        return ""
+
     def description(self):
-        return "id = " + str(self.id) + "\nname = " + str(self.name) + "\ndate_modified = " + str(self.date_modified) + "\nis_folder = " + str(self.is_folder) + "\nsize = " + str(self.size) + "id = " + str(self.id)
+        return "id = " + str(self.id) + "\nname = " + str(self.name) + "\ndate_modified = " + self.get_formatted_date_modified() + "\nis_folder = " + str(self.is_folder) + "\nsize = " + str(self.size)
 
 def get_user_home_path():
     return str(Path.home())
@@ -45,7 +51,8 @@ def get_gdrive_file(id):
 
     is_folder = result['mimeType'] == 'application/vnd.google-apps.folder'
     size = int(result['size']) if 'size' in result else 0
-    return File(id=result['id'], name=result['name'], is_folder=is_folder, size=size)
+    date_modified = datetime.datetime.strptime(item['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
+    return File(id=result['id'], name=result['name'], is_folder=is_folder, date_modified=date_modified, size=size)
     
 
 def get_gdrive_file_children(id):
@@ -59,18 +66,21 @@ def get_gdrive_file_children(id):
     while page_token or first_time:
         result = service.files().list(
             pageSize=100, 
-            fields="nextPageToken, files(id, name, mimeType, size)", 
+            fields="nextPageToken, files(id, name, mimeType, size, trashed, modifiedTime)", 
             pageToken=page_token,
             q=id + " in parents"
         ).execute()
 
         page_token = result.get('nextPageToken')
         for item in result.get('files', []):
-            is_folder = item['mimeType'] == 'application/vnd.google-apps.folder'
-            size = int(item['size']) if 'size' in item else 0
-            files.append(File(id=item['id'], name=item['name'], is_folder=is_folder, size=size))
+            if not item["trashed"]:
+                is_folder = item['mimeType'] == 'application/vnd.google-apps.folder'
+                size = int(item['size']) if 'size' in item else 0
+                date_modified = datetime.datetime.strptime(item['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
+                files.append(File(id=item['id'], name=item['name'], is_folder=is_folder, date_modified=date_modified, size=size))
         
         first_time = False
+
     return files
 
 def create_gdrive_folder(name, parents=None):

@@ -30,6 +30,9 @@ class GDriveTableController(QObject):
         self.table_view.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table_view.setShowGrid(False)
         self.table_view.setUpdatesEnabled(True)
+        self.table_view.setColumnWidth(0, 230)
+        self.table_view.setColumnWidth(1, 150)
+        self.table_view.setColumnWidth(2, 120)
 
         vertical_header = self.table_view.verticalHeader()
         vertical_header.setSectionResizeMode(QHeaderView.Fixed)
@@ -50,7 +53,8 @@ class GDriveTableController(QObject):
         def did_get_files(files):
             self.files = files
             self._model.load_files(self.files)
-            self.table_view.viewport().update()
+            self._model.refresh()
+            # self.table_view.viewport().update()
             self._set_loading_mode(False)
 
         def error_occurred(error):
