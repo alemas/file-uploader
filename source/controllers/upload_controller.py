@@ -121,7 +121,7 @@ class UploadController:
         if self.thread and self.thread.isRunning():
             self.thread.stop = True
             self.view.btnCancel.setEnabled(False)
-            self.view.lblStatus.setText("Canceling the upload...")
+            self.view.lblStatus.setText("Cancelling the upload...")
 
     def _set_gui_upload_mode(self, upload_mode):
         self.view.ledFilePath.setEnabled(not upload_mode)
@@ -152,7 +152,7 @@ class UploadThread(QThread):
                 self.progress_update.emit(progress)
                 self.status_update.emit(status_msg)
                 if self.stop:
-                    self.status_update.emit("The upload was canceled")
+                    self.status_update.emit("The upload was cancelled")
                     self.progress_update.emit(0)
                     self.stop = False
                     break

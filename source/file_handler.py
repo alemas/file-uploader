@@ -51,8 +51,10 @@ def get_gdrive_file(id):
 
     is_folder = result['mimeType'] == 'application/vnd.google-apps.folder'
     size = int(result['size']) if 'size' in result else 0
-    date_modified = datetime.datetime.strptime(item['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
-    return File(id=result['id'], name=result['name'], is_folder=is_folder, date_modified=date_modified, size=size)
+    print(result)
+    # date_modified = datetime.datetime.strptime(item['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
+    # return File(id=result['id'], name=result['name'], is_folder=is_folder, date_modified=date_modified, size=size)
+    return File(id=result['id'], name=result['name'], is_folder=is_folder, date_modified=None, size=size)
     
 
 def get_gdrive_file_children(id):
@@ -149,12 +151,13 @@ def upload(path, parents=None):
                 data_size = sys.getsizeof(data)
                 headers = _get_resumable_upload_headers(
                     str(data_size),
-                    "bytes " + str(offset) + "-" + str(offset+data_size-1-17) + "/" + str(file_size))
+                    "bytes " + str(offset) + "-" + str(offset+data_size-1-33) + "/" + str(file_size))
                 response = requests.put(resumable_url,
                 headers=headers,
                 data=data)
 
-                print(response)
+                # print(response)
+                print(response.text)
                 
                 offset += chunk_size
 
