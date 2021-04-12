@@ -121,7 +121,7 @@ class UploadController:
         if self.thread and self.thread.isRunning():
             self.thread.stop = True
             self.view.btnCancel.setEnabled(False)
-            self.view.lblStatus.setText("Canceling the upload...")
+            self.view.lblStatus.setText("Cancelling the upload...")
 
     def _set_gui_upload_mode(self, upload_mode):
         self.view.ledFilePath.setEnabled(not upload_mode)
@@ -147,17 +147,32 @@ class UploadThread(QThread):
     def run(self):
         try:
             if self.should_zip:
-                self.path = file_handler.zip_file(self.path)
-            for status_msg, progress in file_handler.upload(self.path, self.upload_parents_id):
-                self.progress_update.emit(progress)
-                self.status_update.emit(status_msg)
-                if self.stop:
-                    self.status_update.emit("The upload was canceled")
-                    self.progress_update.emit(0)
-                    self.stop = False
-                    break
+                first_time = True
+                should_upload = True
+                for path, status_msg, progress in file_handler.zip_file(self.path):
+                    if first_time:
+                        self.path = path
+                    self.progress_update.emit(progress)
+                    self.status_update.emit(status_msg)
+                    if self.stop:
+                        should_upload = False
+                        break
+
+            if should_upload:    
+                for status_msg, progress in file_handler.upload(self.path, self.upload_parents_id):
+                    self.progress_update.emit(progress)
+                    self.status_update.emit(status_msg)
+                    if self.stop:
+                        break
+
+            if self.stop:
+                self.status_update.emit("The upload was cancelled")
+                self.progress_update.emit(0)
+                self.stop = False
+
             if self.should_zip:
                 file_handler.clear_temporary_files()
+
         except Exception as error:
             self.error_occurred.emit(error)
             self.status_update.emit("An error occurred. The upload was interrupted")

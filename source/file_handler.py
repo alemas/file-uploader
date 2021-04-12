@@ -4,6 +4,7 @@ import json
 import sys
 import zipfile
 import datetime
+import sys
 
 from pathlib import Path
 
@@ -12,10 +13,12 @@ from googleapiclient.errors import HttpError
 from requests.exceptions import HTTPError
 
 import credentials
+import utils
 
 # drive = build('drive', 'v3', credentials=credentials.get())
-chunk_size = 1024*1024*5
+chunk_size = 1024*1024*20
 
+DEBUG = True
 ACCESS_TOKEN = credentials.get().token
 API_KEY = None
 
@@ -37,6 +40,9 @@ class File:
             return self._date_modified.strftime("%x %X")
         return ""
 
+    def get_formatted_size(self):
+        return utils.format_file_size(self.size)
+
     def description(self):
         return "id = " + str(self.id) + "\nname = " + str(self.name) + "\ndate_modified = " + self.get_formatted_date_modified() + "\nis_folder = " + str(self.is_folder) + "\nsize = " + str(self.size)
 
@@ -49,9 +55,11 @@ def get_gdrive_file(id):
     # id = "'" + id + "'"
     result = service.files().get(fileId=id).execute()
 
+    print(result)
+
     is_folder = result['mimeType'] == 'application/vnd.google-apps.folder'
     size = int(result['size']) if 'size' in result else 0
-    date_modified = datetime.datetime.strptime(item['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
+    date_modified = datetime.datetime.strptime(result['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ') if 'modifiedTime' in result else None
     return File(id=result['id'], name=result['name'], is_folder=is_folder, date_modified=date_modified, size=size)
     
 
@@ -99,14 +107,17 @@ def create_gdrive_folder(name, parents=None):
     return File(id=file['id'], name=name, is_folder=true)
 
 def zip_file(path):
-    dest = "tmp/" + os.path.basename(path) + ".zip"
+    folder_name = os.path.basename(path)
+    dest = "tmp/" + folder_name + ".zip"
     zipped = zipfile.ZipFile(dest, "w", compression=zipfile.ZIP_DEFLATED)
     for root, dirs, files in os.walk(path):
+        files_zipped = 0
         for file in files:
             full_path = os.path.join(root, file)
+            yield(dest, f"Zipping '{folder_name}'. Adding file '{file}' ({utils.format_file_size(os.path.getsize(full_path))})", int(files_zipped*100/len(files)))
             zipped.write(full_path, os.path.relpath(full_path, Path(root).parent))
+            files_zipped += 1
     zipped.close()
-    return dest
 
 def clear_temporary_files():
     for root, dirs, files in os.walk("./tmp"):
@@ -124,13 +135,15 @@ def upload(path, parents=None):
         file_size = os.path.getsize(path)
 
         # Sends the initial POST to start the upload
+        print("\n===============>Sending initial POST")
         try:
             headers = _get_initial_request_headers(file_metadata, str(file_size))
             response = requests.post('https://www.googleapis.com/upload/drive/v3/files',
             params={'uploadType':'resumable', 'key':API_KEY},
             headers=headers,
             data=json.dumps(file_metadata))
-
+            if DEBUG:
+                print(f'Response:\nHEADERS\n{response.headers}\nBODY:\n{response.text}')
             resumable_url = response.headers['Location']
 
         except HTTPError as error:
@@ -138,22 +151,26 @@ def upload(path, parents=None):
             raise
         except Exception as error:
             print(f'An error occurred while starting the file upload: {error}')
-            raise
+            raise   
 
         # Starts the upload
+        print("\n===============>Starting Upload")
         try:
             file = open(path, "rb")
             offset = 0
             for data in _read_file_chunks(file):
                 yield ("Uploading " + file_metadata['name'] + "...", int(offset*100/file_size))
                 data_size = sys.getsizeof(data)
+                packet_offset = 17 if _get_os() == 'win32' else 33
                 headers = _get_resumable_upload_headers(
                     str(data_size),
-                    "bytes " + str(offset) + "-" + str(offset+data_size-1-17) + "/" + str(file_size))
+                    "bytes " + str(offset) + "-" + str(offset+data_size-1-packet_offset) + "/" + str(file_size))
                 response = requests.put(resumable_url,
                 headers=headers,
                 data=data)
-
+                
+                if DEBUG:
+                    print(f'Response:\nHEADERS\n{response.headers}\nBODY:\n{response.text}')
                 print(response)
                 
                 offset += chunk_size
@@ -198,3 +215,7 @@ def _read_file_chunks(file):
         if not chunk:
             break
         yield chunk
+
+# Common values are 'win32', 'linux' and 'darwin' (MacOS)
+def _get_os():
+    return sys.platform

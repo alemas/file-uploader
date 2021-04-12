@@ -29,10 +29,7 @@ class GDriveTableModel(QAbstractTableModel):
                 elif header == FileHeader.DateModified:
                     self.data[file_index].append(file.get_formatted_date_modified())
                 elif header == FileHeader.Size:
-                    size_str = f'{file.size:n}' + " B"
-                    if file.size > 1024:
-                        size_str = f'{int(file.size/1024):n}' + " KB"
-                    self.data[file_index].append(size_str)
+                    self.data[file_index].append(file.get_formatted_size())
                 elif header == FileHeader.Shared:
                     self.data[file_index].append(False)
 
