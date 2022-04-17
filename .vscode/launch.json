@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/source/main.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
             "cwd": "${workspaceFolder}/source"
         }
     ]

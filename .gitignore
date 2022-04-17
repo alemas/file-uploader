@@ -1,9 +1,11 @@
+.DS_Store
 /source/token.pickle
 /source/credentials.json
 /source/data
 /source/api_key.txt
 /source/user_data.pickle
 /source/tmp/*
+/source/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
